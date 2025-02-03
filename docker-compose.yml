@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: BOOKSTORE_DB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: P@ssw0rd@123
+    networks:
+      - bookstore_network
+
+  web:
+    build: .
+    command: python manage.py migrate && python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db  # Set 'db' as the host when running in Docker
+    networks:
+      - bookstore_network
+
+volumes:
+  postgres_data:
+
+networks:
+  bookstore_network:
+    driver: bridge
