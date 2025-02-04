@@ -96,8 +96,8 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can only review books you have purchased.")
 
         # Check if the user has already reviewed the book
-        if Review.objects.filter(user=user, book=book).exists():
-            raise serializers.ValidationError("You have already reviewed this book.")
+        # if Review.objects.filter(user=user, book=book).exists():
+        #     raise serializers.ValidationError("You have already reviewed this book.")
 
         return data
 
