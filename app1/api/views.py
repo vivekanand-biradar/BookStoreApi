@@ -11,8 +11,8 @@ from rest_framework.exceptions import PermissionDenied
 # from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.permissions import IsAuthenticatedOrReadOnly,IsAuthenticated,IsAdminUser
-from app1.permission import ReadOnlyForAllExceptAdmin
-#IsOwnerOrReadOnly,AllowAdminOrOwnerDelete,IsAuthenticatedOrOwnReview,ReadOnlyForAuthenticatedUsers,
+from app1.permission import ReadOnlyForAllExceptAdmin,AllowAdminOrOwnerEditDelete
+#IsOwnerOrReadOnly,AllowAdminOrOwnerDelete,ReadOnlyForAuthenticatedUsers,,IsAuthenticatedOrOwnReview
 # Create your views here.
 
 #ModelViewSet
@@ -77,33 +77,6 @@ class PurchaseModelViewSet(viewsets.ModelViewSet):
 
 
 
-class ReviewModelViewSet(viewsets.ModelViewSet):
-    serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get_queryset(self):
-        """
-        Show all reviews for any book.
-        But, users can only create a review for the books they've purchased.
-        """
-        user = self.request.user
-        if user.is_authenticated:
-            # If the user is authenticated, show all reviews.
-            return Review.objects.all()
-        return Review.objects.none()
-    def perform_create(self, serializer):
-        user = self.request.user
-        book = serializer.validated_data['book']
-
-        # Validate if the buyer has purchased the book
-        if not Purchase.objects.filter(buyer=user, book=book).exists():
-            raise serializers.ValidationError("You can only review books you have purchased.")
-        
-        # Save the review
-        serializer.save(user=user)
-
-
-
 # class ReviewModelViewSet(viewsets.ModelViewSet):
 #     serializer_class = ReviewSerializer
 #     permission_classes = [AllowAdminOrOwnerEditDelete]
@@ -118,9 +91,6 @@ class ReviewModelViewSet(viewsets.ModelViewSet):
 #             # If the user is authenticated, show all reviews.
 #             return Review.objects.all()
 #         return Review.objects.none()
-    
-
-
 #     def perform_create(self, serializer):
 #         user = self.request.user
 #         book = serializer.validated_data['book']
@@ -128,39 +98,69 @@ class ReviewModelViewSet(viewsets.ModelViewSet):
 #         # Validate if the buyer has purchased the book
 #         if not Purchase.objects.filter(buyer=user, book=book).exists():
 #             raise serializers.ValidationError("You can only review books you have purchased.")
-
-#         # Save the review with the authenticated user
+        
+#         # Save the review
 #         serializer.save(user=user)
 
-#     # def perform_update(self, serializer):
-#     #     """
-#     #     Only allow a user to edit their own review.
-#     #     """
-#     #     review = self.get_object()
-#     #     if review.user != self.request.user:
-#     #         raise PermissionDenied("You can only edit your own review.")
+
+
+class ReviewModelViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [AllowAdminOrOwnerEditDelete]
+
+    def get_queryset(self):
+        """
+        Show all reviews for any book.
+        But, users can only create a review for the books they've purchased.
+        """
+        user = self.request.user
+        if user.is_authenticated:
+            # If the user is authenticated, show all reviews.
+            return Review.objects.all()
+        return Review.objects.none()
+    
+
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        book = serializer.validated_data['book']
+
+        # Validate if the buyer has purchased the book
+        if not Purchase.objects.filter(buyer=user, book=book).exists():
+            raise serializers.ValidationError("You can only review books you have purchased.")
+
+        # Save the review with the authenticated user
+        serializer.save(user=user)
+
+    # def perform_update(self, serializer):
+    #     """
+    #     Only allow a user to edit their own review.
+    #     """
+    #     review = self.get_object()
+    #     if review.user != self.request.user:
+    #         raise PermissionDenied("You can only edit your own review.")
         
-#     #     # Save the review after validation
-#     #     serializer.save()
+    #     # Save the review after validation
+    #     serializer.save()
 
 
-#     def perform_update(self, serializer):
+    def perform_update(self, serializer):
 
-#         ##  Only allow a user to edit their own review.
+        ##  Only allow a user to edit their own review.
     
-#         review = self.get_object()
-#         if review.user != self.request.user:
-#             raise PermissionDenied("You can only edit your own review.")
+        review = self.get_object()
+        if review.user != self.request.user:
+            raise PermissionDenied("You can only edit your own review.")
     
-#         serializer.save()
+        serializer.save()
 
 
-#     def perform_destroy(self, instance):
+    def perform_destroy(self, instance):
     
-#            ### Allow review owners and admins to delete reviews.
+           ### Allow review owners and admins to delete reviews.
     
-#         user = self.request.user
-#         if not user.is_staff and instance.user != user:
-#             raise PermissionDenied("Only the review owner or an admin can delete this review.")
+        user = self.request.user
+        if not user.is_staff and instance.user != user:
+            raise PermissionDenied("Only the review owner or an admin can delete this review.")
 
-#         instance.delete()
+        instance.delete()
